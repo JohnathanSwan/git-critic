@@ -59,6 +59,12 @@ has _run_test_queue => (
     init_arg => undef,
 );
 
+has include_local_changes => (
+    is => 'ro',
+    isa => Bool,
+    default => 1,
+);
+
 #
 # Builders
 #
@@ -131,10 +137,11 @@ sub _get_modified_perl_files {
     my $self           = shift;
     my $primary_target = $self->primary_target;
     my $current_target = $self->current_target;
-    my @files          = uniq sort grep { /\S/ && $self->_is_perl($_) }
+    my @files =
       split /\n/ => $self->_run( 'git', 'diff', '--name-only',
         "$primary_target..$current_target" );
-    return @files;
+    push @files, split /\n/, qx{git status --porcelain | cut -c 4-} if $self->include_local_changes;
+    return uniq sort grep { /\S/ && $self->_is_perl($_) } @files;
 }
 
 # get the diff of the current file
