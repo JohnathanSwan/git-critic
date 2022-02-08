@@ -126,8 +126,6 @@ sub _run_without_die {
     return $result;
 }
 
-my $two = 1 if $ENV{THREE};
-
 # get Perl files which have been changed in the current branch
 sub _get_modified_perl_files {
     my $self           = shift;
