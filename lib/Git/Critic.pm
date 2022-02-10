@@ -190,7 +190,7 @@ sub run {
   FILE: foreach my $file (@files) {
         my %reported;
 
-        my $file_text = $self->_run( 'git', 'show', "${current_target}:$file" )
+        my $file_text = $self->_run( 'git', 'show', '--', "${current_target}:$file" )
           or next FILE;
         if ( $self->max_file_size ) {
             # we want the lenght in bytes, not characters
@@ -214,7 +214,7 @@ sub run {
         my $critique =
           $self->_run_without_die( 'perlcritic', @arguments );
 
-        remove_tree($dir, { safe => 1, keep_root => 1});
+        remove_tree($dir, { safe => 1 });
 
         next FILE unless $critique; # should never happen unless perlcritic dies
         my @critiques = split /\n/, $critique;
@@ -261,7 +261,7 @@ sub run {
 # a client to override this in the future
 sub _is_perl {
     my ( $self, $file ) = @_;
-    return unless -e $file;    # sometimes we get non-existent files
+    return unless -e $file;    # sometimes we get non-existent files XXX need to check git show(?) on target branch
     return 1 if $file =~ /\.(?:p[ml]|t)$/;
 
     # if we got to here, let's check to see if "perl" is in a shebang
