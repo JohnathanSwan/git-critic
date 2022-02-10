@@ -8,8 +8,10 @@ use autodie ":all";
 
 use Capture::Tiny 'capture_stdout';
 use Carp;
-use File::Basename 'basename';
-use File::Temp 'tempfile';
+use File::Basename qw(basename dirname);
+use File::Path qw(make_path remove_tree);
+use File::Spec::Functions 'catfile';
+use File::Temp 'tempdir';
 use List::Util qw(uniq);
 use Moo;
 use Types::Standard qw( ArrayRef Bool Int Str);
@@ -197,7 +199,11 @@ sub run {
               unless length($file_text) <= $self->max_file_size;    # large files are very slow
         }
 
-        my ($fh, $filename) = tempfile();
+        my $dir = tempdir( CLEANUP => 1 );
+        my $filename = catfile($dir, $file);
+        my $tmppath = dirname($filename);
+        make_path($tmppath);
+        open my $fh, '>', $filename or die "Error opening tempfile $filename: $!";
         print $fh $file_text;
         close $fh;
         my $severity = $self->severity;
@@ -207,6 +213,9 @@ sub run {
         push @arguments, $filename;
         my $critique =
           $self->_run_without_die( 'perlcritic', @arguments );
+
+        remove_tree($dir, { safe => 1, keep_root => 1});
+
         next FILE unless $critique; # should never happen unless perlcritic dies
         my @critiques = split /\n/, $critique;
 
